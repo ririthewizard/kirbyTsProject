@@ -11,6 +11,7 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
         k.doubleJump(10),
         k.health(3),
         k.opacity(1),
+        //default values for player
         {
             speed: 300,
             direction: "right",
@@ -20,7 +21,10 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
         "player",
     ]);
 
+    //if player collides with enemy. async so code doesn't keep running while below things are happening
     player.onCollide("enemy", async (enemy: GameObj) => {
+
+        //destroys enemy if player is inhaling and enemy is inhalable
         if (player.isInhaling && enemy.isInhalable) {
             player.isInhaling = false;
             k.destroy(enemy);
@@ -28,14 +32,17 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
             return;
         }
 
+        //respawn mechanic if player hp drops to 0
         if (player.hp() === 0) {
             k.destroy(player);
             k.go("level-1");
             return;
         }
 
+        //if none of above things are true, reduce player hp by 1
         player.hurt();
 
+        //tween is basically a loop. gives us flashing effect. turns value from 1 to 0 in given time frame, then 0 to 1 in next tween
         await k.tween(
             player.opacity,
             0,
@@ -52,10 +59,12 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
         );
     });
 
+    //when player hits the exit, go to next scene
     player.onCollide("exit", () => {
         k.go("level-2");
     });
 
+    //adds inhale effect as a const and sets opacity to 0
     const inhaleEffect = k.add([
         k.sprite("assets", {anim: "kirbInhaleEffect"}),
         k.pos(),
@@ -64,12 +73,14 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
         "inhaleEffect",
     ]);
 
+    //creates the inhale zone based on player
     const inhaleZone = player.add([
         k.area({ shape: new k.Rect(k.vec2(0), 20, 4) }),
         k.pos(),
         "inhaleZone",
     ]);
 
+    //allows us to flip inhale zone & anim based on if player is facing left or right
     inhaleZone.onUpdate(() => {
         if (player.direction === "left") {
             inhaleZone.pos = k.vec2(-14, 8);
@@ -80,5 +91,14 @@ export function makePlayer(k: KaboomCtx, posX: number, posY: number) {
         inhaleZone.pos = k.vec2(14, 8);
         inhaleEffect.pos = k.vec2(player.pos.x + 60, player.pos.y + 0);
         inhaleEffect.flipX = false;
-    })
+    });
+
+    //pos y value means player is falling and "dies" so we respawn them
+    player.onUpdate(() => {
+        if (player.pos.y > 2000) {
+            k.go("level-1");
+        }
+    });
+
+    return player;
 }
