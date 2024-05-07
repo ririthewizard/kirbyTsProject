@@ -2,6 +2,7 @@ import { k } from "./kaboomCtx";
 import { makeMap } from "./utils";
 
 async function gameSetup() {
+    //loads all the character sprites we need once so we don't continuously load them
     k.loadSprite("assets", "./kirby-like.png", {
         sliceX: 9,
         sliceY: 10,
@@ -18,10 +19,13 @@ async function gameSetup() {
         },
     });
 
+    //loads first level sprite
     k.loadSprite("level-1", "./level-1.png");
 
+    //destructure const so adding maps with spawn points doesnt get confusing/buggy later on
     const { map: level1Layout, spawnPoints: level1SpawnPoints } = await makeMap(k, "level-1");
 
+    //sets gravity and bg to first level
     k.scene("level-1", () => {
         k.setGravity(2100);
         k.add([
