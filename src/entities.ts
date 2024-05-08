@@ -126,17 +126,17 @@ export function setControls(k: KaboomCtx, player: PlayerGameObj) {
     const inhaleEffectRef = k.get("inhaleEffect")[0];
 
     k.onKeyDown((key) => {
-        if (key == "a") {
+        if (key === "a") {
             player.direction = "left";
             player.flipX = true;
-            player.move(player.speed, 0);
+            player.move(-player.speed, 0);
         }
-        if (key == "d") {
+        if (key === "d") {
             player.direction = "right";
             player.flipX = false;
             player.move(player.speed, 0);
         }
-        if (key == ".") {
+        if (key === ".") {
             if (player.isFull) {
                 player.play("kirbFull");
                 inhaleEffectRef.opacity = 0;
@@ -145,5 +145,46 @@ export function setControls(k: KaboomCtx, player: PlayerGameObj) {
             player.play("kirbInhaling");
             inhaleEffectRef.opacity = 1;
         }
+        
     });
+
+    k.onKeyPress((key) => {
+        if (key === "space") { player.doubleJump(); }
+    });
+
+    k.onKeyRelease((key) => {
+        if (key === ".") {
+            if(player.isFull) {
+                //kirbInhaling works for both inhaling and shooting the star
+                player.play("kirbInhaling");
+
+                //adding the shootingStar obj into game and logic on how to display it and it's movement based on player direction
+                const shootingStar = k.add([
+                    k.sprite("assets", {
+                        anim: "shootingStar",
+                        flipX: player.direction === "right",
+                    }),
+                    k.area({ shape: new k.Rect(k.vec2(5, 4), 6, 6) }),
+                    k.pos(
+                        player.direction === "left" ? player.pos.x = 80 : player.pos.x + 80,
+                        player.pos.y + 5
+                    ),
+                    k.scale(scale),
+                    player.direction === "left"
+                    ? k.move(k.LEFT, 800)
+                    : k.move(k.RIGHT, 800),
+                    "shootingStar",
+                ]);
+            shootingStar.onCollide("platform", () => k.destroy(shootingStar));
+            
+            player.isFull = false;
+            k.wait(1, () => player.play("kirbIdle"));
+            return;
+            }
+
+            inhaleEffectRef.opacity = 0;
+            player.isInhaling = false;
+            player.play("kirbIdle");
+        }
+    })
 }
